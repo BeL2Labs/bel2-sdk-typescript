@@ -1,0 +1,11 @@
+{
+  "name": "@bel2/sdk",
+  "version": "0.0.1",
+  "main": "index.js",
+  "repository": "git@github-bel2:BeL2Labs/bel2-sdk-typescript.git",
+  "author": "BeL2",
+  "license": "MIT",
+  "devDependencies": {
+    "ethers": "^6.13.1"
+  }
+}
