@@ -5,7 +5,7 @@
     "rootDir": ".",
     "paths": {
       "@bel2/sdk": [
-        "../dist/index.esm.js"
+        "../dist/index.d.ts"
       ]
     }
   },

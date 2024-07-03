@@ -3,6 +3,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 
+// TODO: very basic config. Check the elastos DID JS SDK for a more advanced config
 export default [
   {
     input: 'src/index.ts',

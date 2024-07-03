@@ -1,4 +1,4 @@
-import { TransactionVerification } from "@bel2/sdk";
+import { TransactionVerification, TransactionVerificationStatus } from "@bel2/sdk";
 import { signAndSendEVMTransaction } from "../utils/evm-utils";
 
 async function submitBitcoinTransactionForVerification() {

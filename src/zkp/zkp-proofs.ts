@@ -1,6 +1,6 @@
 import { sha256 } from "@utils/crypto/sha256";
 import { MerkleTree } from "merkletreejs";
-import { getTransactionDetails, getBlock } from "src/nownodes-api/nownodes-api";
+import { getBlock, getTransactionDetails } from "src/nownodes-api/nownodes-api";
 
 export type ProofParams = {
   blockHeight: number;
