@@ -1,5 +1,5 @@
 import { TransactionVerificationStatus } from "../transaction-verification";
 
-export const useTransactionVerification = (): TransactionVerificationStatus => {
+export const useTransactionVerificationStatus = (btcTxId: string): TransactionVerificationStatus => {
   return TransactionVerificationStatus.NotSubmitted;
 }

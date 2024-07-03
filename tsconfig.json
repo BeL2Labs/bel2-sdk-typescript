@@ -13,6 +13,7 @@
     "strict": true,
     "strictNullChecks": false,
     "forceConsistentCasingInFileNames": true,
+    "declaration": true,
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
@@ -20,15 +21,16 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": "./",
+    "outDir": "./dist",
+    "rootDir": "./src",
     "paths": {
-      "@sdk/*": [
-        "./src/*"
+      "@utils/*": [
+        "./src/utils/*"
       ]
     }
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "src/services"
+    "src/**/*.ts",
+    "src/**/*.tsx",
   ]
 }

@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDir": ".",
+    "paths": {
+      "@bel2/sdk": [
+        "../dist/index.esm.js"
+      ]
+    }
+  },
+  "include": [
+    "**/*"
+  ]
+}

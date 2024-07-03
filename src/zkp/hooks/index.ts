@@ -1,1 +1,1 @@
-export * from "./useTransactionVerification";
+export * from "./useTransactionVerificationStatus";

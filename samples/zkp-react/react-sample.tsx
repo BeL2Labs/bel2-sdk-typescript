@@ -1,4 +1,3 @@
-import { TransactionVerificationStatus, useTransactionVerificationStatus } from "@sdk/zkp";
 import { FC } from "react";
 
 export const MyComp: FC = () => {
