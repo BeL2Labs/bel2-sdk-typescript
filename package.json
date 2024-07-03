@@ -6,6 +6,8 @@
   "author": "BeL2",
   "license": "MIT",
   "devDependencies": {
-    "ethers": "^6.13.1"
+    "@types/react": "^18.3.3",
+    "ethers": "^6.13.1",
+    "react": "^18.3.1"
   }
 }
