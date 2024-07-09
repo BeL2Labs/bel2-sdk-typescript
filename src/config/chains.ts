@@ -1,4 +1,4 @@
-import { EVMChainConfig } from "@services/chains/evm-chain-config";
+import { EVMChainConfig } from "src/services/chains/evm-chain-config";
 
 /**
  * List of supported EVMs by BeL2.

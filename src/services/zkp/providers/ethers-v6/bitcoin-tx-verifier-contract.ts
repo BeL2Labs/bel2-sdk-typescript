@@ -1,9 +1,10 @@
-import { getChainConfigByChainId } from "@services/chains/chains";
-import { errorToRevertedExecution } from "@services/evm/errors";
-import { ContractRunner, ContractTransactionResponse, Signer } from "ethers";
+import { ContractRunner, ContractTransactionResponse, JsonRpcProvider, Signer } from "ethersv6";
+import { convertContractStatus } from "../../contract";
+import { ZKPProofParams } from "../../proof-params";
+import { TransactionVerificationStatus } from "../../verification-status";
 import { BtcTxVerifier, BtcTxVerifier__factory } from "src/contracts/types";
-import { ZKPProofParams } from "./proof-params";
-import { TransactionVerificationStatus } from "./verification-status";
+import { getChainConfigByChainId } from "src/services/chains/chains";
+import { errorToRevertedExecution } from "src/services/evm/providers/ethers-v6/errors";
 
 const connectZkpTxVerifierContract = async (runner: ContractRunner): Promise<BtcTxVerifier> => {
   if (!runner)
@@ -50,25 +51,12 @@ export const sendBitcoinTransactionVerificationRequest = async (signer: Signer, 
   return txResponse;
 }
 
-export const getBitcoinTransactionVerificationStatus = async (providerOrSigner: ContractRunner, txId: string): Promise<TransactionVerificationStatus> => {
+export const getBitcoinTransactionVerificationStatus = async (providerOrSigner: JsonRpcProvider, txId: string): Promise<TransactionVerificationStatus> => {
   const verifierContract = await connectZkpTxVerifierContract(providerOrSigner);
 
   try {
     const rawStatus = await verifierContract.getTxZkpStatus(txId);
-
-    /*
-      enum ProofStatus {
-        toBeVerified,
-        verified,
-        verifyFailed
-      }
-    */
-    switch (rawStatus) {
-      case BigInt(0): return TransactionVerificationStatus.Pending;
-      case BigInt(1): return TransactionVerificationStatus.Verified;
-      case BigInt(2): return TransactionVerificationStatus.VerificationFailed;
-      default: return TransactionVerificationStatus.Unknown;
-    }
+    return convertContractStatus(rawStatus);
   }
   catch (e) {
     const revertedReason = errorToRevertedExecution(e);

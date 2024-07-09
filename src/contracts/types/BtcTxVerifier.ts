@@ -2,25 +2,25 @@
 /* tslint:disable */
 /* eslint-disable */
 import type {
+  AddressLike,
   BaseContract,
   BigNumberish,
   BytesLike,
-  FunctionFragment,
-  Result,
-  Interface,
-  EventFragment,
-  AddressLike,
-  ContractRunner,
   ContractMethod,
+  ContractRunner,
+  EventFragment,
+  FunctionFragment,
+  Interface,
   Listener,
-} from "ethers";
+  Result,
+} from "ethersv6";
 import type {
   TypedContractEvent,
+  TypedContractMethod,
   TypedDeferredTopicFilter,
   TypedEventLog,
-  TypedLogDescription,
   TypedListener,
-  TypedContractMethod,
+  TypedLogDescription,
 } from "./common";
 
 export type TxVerifyRecordStruct = {
@@ -194,7 +194,7 @@ export namespace BtcHeaderAddrChangedEvent {
     newAddress: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
+  //export type Filter = TypedDeferredTopicFilter<Event>;
   export type Log = TypedEventLog<Event>;
   export type LogDescription = TypedLogDescription<Event>;
 }
@@ -206,7 +206,7 @@ export namespace BtcTxVerifiedEvent {
     txid: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  export type Filter = TypedDeferredTopicFilter<Event>;
+  //export type Filter = TypedDeferredTopicFilter<Event>;
   export type Log = TypedEventLog<Event>;
   export type LogDescription = TypedLogDescription<Event>;
 }

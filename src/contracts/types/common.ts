@@ -2,19 +2,19 @@
 /* tslint:disable */
 /* eslint-disable */
 import type {
-  FunctionFragment,
-  Typed,
-  EventFragment,
   ContractTransaction,
   ContractTransactionResponse,
   DeferredTopicFilter,
+  EventFragment,
   EventLog,
-  TransactionRequest,
+  FunctionFragment,
   LogDescription,
-} from "ethers";
+  TransactionRequest,
+  Typed,
+} from "ethersv6";
 
 export interface TypedDeferredTopicFilter<_TCEvent extends TypedContractEvent>
-  extends DeferredTopicFilter {}
+  extends DeferredTopicFilter { }
 
 export interface TypedContractEvent<
   InputTuple extends Array<any> = any,

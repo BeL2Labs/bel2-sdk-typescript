@@ -1,6 +1,6 @@
-import { getBlock, getTransactionDetails } from "@services/nownodes-api/nownodes-api";
-import { sha256 } from "@utils/crypto/sha256";
 import { MerkleTree } from "merkletreejs";
+import { sha256 } from "../../utils/crypto/sha256";
+import { getBlock, getTransactionDetails } from "../nownodes-api/nownodes-api";
 
 /**
  * Input parameters needed by the ZKP contract to submit a bitcoin transaction proof

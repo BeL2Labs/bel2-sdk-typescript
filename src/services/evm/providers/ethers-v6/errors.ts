@@ -1,4 +1,4 @@
-import { CallExceptionError, isCallException } from "ethers";
+import { CallExceptionError, isCallException } from "ethersv6";
 
 /**
  * Tries to understand any kind of contract call error as a potential "revert".

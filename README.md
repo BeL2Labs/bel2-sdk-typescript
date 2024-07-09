@@ -15,7 +15,14 @@
 
 ## Supported interfaces
 
-- ethers v6 is used to bundle transactions.
+This library abstracts different version of popular EVM providers for convenience.
+
+- ethers v6
+- ethers v5
+
+## Development notes
+
+- Do NOT use custom tsconfig paths, they rollup/typescript cannot easily produce declaration files.
 
 ## The ZKP module
 
