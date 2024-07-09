@@ -1,28 +1,22 @@
 /**
  * Nownodes BTC Services
  * https://documenter.getpostman.com/view/13630829/TVmFkLwy#53f3a035-507d-47c1-81c2-f0dea88dacb9
+ * 
+ * Nownodes API is proxied behind a bel2 endpoint in order to hide the API key while providing a convenient API
+ * for this SDK to use. Later on, a bel2 api key generation might be needed to monitor traffic usage and prevent
+ * abuses.
  */
 
 import axios from "axios";
 import { AddressInfo, BTCBlock, BTCTransaction, BestBlockHashInfo, UTXO } from "./model/types";
 
-// const mainnetNodeApi = 'https://nownodes-btc.bel2.org'; // 'https://btc.nownodes.io';
-const mainnetExplorerApi = 'https://nownodes-btcbook.bel2.org'; // 'https://btcbook.nownodes.io';
+// const mainnetNodeApi = 'https://nownodes-btc.bel2.org'; // Maps to 'https://btc.nownodes.io';
+const mainnetExplorerApi = 'https://nownodes-btcbook.bel2.org'; // Maps to 'https://btcbook.nownodes.io';
 
 const apiGet = async <T>(url: string): Promise<T> => {
   const response = await axios({ method: "GET", url });
   return response?.data;
 }
-
-/* const nodeApiPost = async <T>(data: string): Promise<T> => {
-  const response = await axios<RPCNodeResult<T>>({
-    method: "POST",
-    headers: { 'Content-Type': 'application/json' },
-    url: mainnetNodeApi,
-    data
-  });
-  return response?.data?.result;
-} */
 
 /**
  * Gets info about a given address
@@ -69,12 +63,11 @@ export const getBlock = async (heightOrHash: string, withTxIds = false): Promise
     // Caller wants all transactions. So we continue to iterate all pages and build the txIds list.
     let txIds: string[] = undefined;
     if (withTxIds) {
-      console.log("blockInfo", blockInfo)
       // Append transactions of the already fetched first page
       txIds = blockInfo?.txs.map(t => t.txid);
 
       for (let i = 2; i <= blockInfo?.totalPages || 0; i++) {
-        console.log(`Fetching block's transaction page ${i}`);
+        // console.log(`Fetching block's transaction page ${i}`);
         let nextPageInfo = await apiGet<BTCBlock>(`${requestUrl}?page=${i}`);
         txIds.push(...nextPageInfo.txs.map(t => t.txid));
       }

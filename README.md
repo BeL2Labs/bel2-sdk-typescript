@@ -2,7 +2,7 @@
 
 ## Installation
 
-`yarn add @bel2/sdk`
+`yarn add @bel2labs/sdk`
 
 ## Modules
 
@@ -12,6 +12,10 @@
 -- (later) runes
 -- (later) inscriptions
 - (later) other bel2 services than zkp
+
+## Supported interfaces
+
+- ethers v6 is used to bundle transactions.
 
 ## The ZKP module
 

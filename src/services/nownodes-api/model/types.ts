@@ -63,27 +63,6 @@ export type UTXO = {
     utxoHex?: string
 }
 
-/* export type OutputData = {
-    Address: string,
-    Amount: number
-} */
-
-/* export type TxData = {
-    inputs: UTXO[],
-    outputs: OutputData[],
-    changeAddress: string,
-    feePerKB: string,
-    fee?: number // SATOSHI
-} */
-
-/* export type BalanceHistory = {
-    received: string;
-    sent: string;
-    sentToSelf: string;
-    time: number;
-    txs: number;
-}; */
-
 export type AddressInfo = {
     page: number;
     totalPages: number;

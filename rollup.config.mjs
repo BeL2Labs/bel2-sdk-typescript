@@ -3,7 +3,7 @@ import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 
-// TODO: very basic config. Check the elastos DID JS SDK for a more advanced config
+// TODO: very basic config. Check the elastos DID JS SDK for a more advanced config.
 export default [
   {
     input: 'src/index.ts',
@@ -27,5 +27,12 @@ export default [
         tsconfig: 'tsconfig.json',
       }),
     ],
+    onwarn: (warning, warn) => {
+      // Ignore the "this is undefined" warning for aes-js
+      if (warning.code === 'THIS_IS_UNDEFINED' && /aes-js/.test(warning.message))
+        return;
+
+      warn(warning);
+    }
   },
 ];

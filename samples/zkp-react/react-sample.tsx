@@ -1,4 +1,4 @@
-import { TransactionVerificationStatus, useTransactionVerificationStatus } from "@bel2/sdk";
+import { TransactionVerificationStatus, useTransactionVerificationStatus } from "@bel2labs/sdk";
 import { FC } from "react";
 
 export const MyComp: FC = () => {

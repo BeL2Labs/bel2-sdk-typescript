@@ -26,6 +26,15 @@
     "paths": {
       "@utils/*": [
         "./src/utils/*"
+      ],
+      "@services/*": [
+        "./src/services/*"
+      ],
+      "@model/*": [
+        "./src/model/*"
+      ],
+      "@config/*": [
+        "./src/config/*"
       ]
     }
   },

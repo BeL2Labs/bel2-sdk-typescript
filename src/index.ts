@@ -1,1 +1,1 @@
-export * from "./zkp";
+export * from "./services/zkp";
