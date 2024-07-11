@@ -1,17 +1,21 @@
 {
   "name": "@bel2labs/sdk",
   "version": "0.0.1",
+  "repository": "git@github-bel2:BeL2Labs/bel2-sdk-typescript.git",
+  "author": "BeL2Labs",
+  "license": "MIT",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
-  "repository": "git@github-bel2:BeL2Labs/bel2-sdk-typescript.git",
-  "author": "BeL2",
-  "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "rollup -c && tsc --emitDeclarationOnly",
     "typechain:ethers:v5": "typechain --target=ethers-v5 --out-dir src/contracts/ethersv5/types 'src/contracts/abi/*.json'",
     "typechain:ethers:v6": "typechain --target=ethers-v6 --out-dir src/contracts/ethersv6/types 'src/contracts/abi/*.json'",
-    "typechain": "yarn typechain:ethers:v6 && yarn typechain:ethers:v5"
+    "typechain": "yarn typechain:ethers:v6 && yarn typechain:ethers:v5",
+    "prepublishOnly": "yarn build"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.0",

@@ -6,16 +6,11 @@
 
 ## Modules
 
-- zkproofs
--- bitcoin transactions
--- (later) bitcoin blocks
--- (later) runes
--- (later) inscriptions
-- (later) other bel2 services than zkp
+- ZKP: ZK Proofs for bitcoin transactions
 
 ## Supported interfaces
 
-This library abstracts different version of popular EVM providers for convenience.
+This library abstracts various versions of popular EVM providers for convenience.
 
 - ethers v6
 - ethers v5
@@ -34,13 +29,27 @@ This topic is not covered by this SDK. Please refer to [doc of zkp contract].
 
 ### Submitting a proof from a client app or web service
 
-See `samples/zkp/submit-verification.ts`
+See `samples` folder for full code.
 
-### React hooks
+#### Ethers v6 quickstart
 
-See `samples/zkp-react/react-sample.tsx`
+```typescript
+import { ZKP } from "@bel2labs/sdk";
+import { ethers } from 'ethers';
 
-## Development notes
+const verification = await ZKP.EthersV6.TransactionVerification.create(txId, 20);
+if (!verification.isSubmitted()) {
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  const signer = await provider.getSigner();
 
-- Do NOT use custom tsconfig paths, they rollup/typescript cannot easily produce declaration files.
-- After running `yarn typechain`, edit 3 source files in src/contracts/ ethersv5/ethersv6 to replace the "ethers" imports with "ethersv5" or "ethersv6".
+  verification.status$.subscribe((status) => {
+    console.log("New status:", status);
+  });
+
+  const response = await verification.submitVerificationRequest(signer);
+}
+```
+
+## Contribute / Development
+
+See [Development](docs/development.md)
