@@ -1,4 +1,4 @@
-import { JsonRpcProvider } from "ethersv6";
+import { JsonRpcProvider } from "@ethersproject/providers";
 import { getChainConfigByChainId } from "src/services/chains/chains";
 
 /**

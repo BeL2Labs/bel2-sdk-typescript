@@ -12,7 +12,7 @@ type ScriptPubKey = {
 }
 
 type VIn = {
-    txid: string;
+    txid?: string;
     vout: number;
     sequence: number;
     scriptSig: ScriptSig;
@@ -38,7 +38,7 @@ export type BTCTransactionSpecific = {
     vin: VIn[];
     vout: VOut[];
     hex: string; // Transaction data
-    blockhash: string; // The block hash containing the transaction.
+    blockhash?: string; // The block hash containing the transaction. Unset if transaction is not mined yet
     confirmations: number; // The number of confirmations for the transaction. Negative confirmations means the transaction conflicted that many blocks ago.
     time: number;
     blocktime: number; // The block time expressed in UNIX epoch time (seconds).

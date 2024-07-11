@@ -20,10 +20,6 @@ This library abstracts different version of popular EVM providers for convenienc
 - ethers v6
 - ethers v5
 
-## Development notes
-
-- Do NOT use custom tsconfig paths, they rollup/typescript cannot easily produce declaration files.
-
 ## The ZKP module
 
 ### Workflow
@@ -43,3 +39,8 @@ See `samples/zkp/submit-verification.ts`
 ### React hooks
 
 See `samples/zkp-react/react-sample.tsx`
+
+## Development notes
+
+- Do NOT use custom tsconfig paths, they rollup/typescript cannot easily produce declaration files.
+- After running `yarn typechain`, edit 3 source files in src/contracts/ ethersv5/ethersv6 to replace the "ethers" imports with "ethersv5" or "ethersv6".

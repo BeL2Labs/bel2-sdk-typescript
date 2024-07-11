@@ -194,7 +194,7 @@ export namespace BtcHeaderAddrChangedEvent {
     newAddress: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  //export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
   export type Log = TypedEventLog<Event>;
   export type LogDescription = TypedLogDescription<Event>;
 }
@@ -206,7 +206,7 @@ export namespace BtcTxVerifiedEvent {
     txid: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
-  //export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
   export type Log = TypedEventLog<Event>;
   export type LogDescription = TypedLogDescription<Event>;
 }

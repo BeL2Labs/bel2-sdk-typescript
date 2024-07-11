@@ -9,30 +9,29 @@
   "license": "MIT",
   "scripts": {
     "build": "rollup -c && tsc --emitDeclarationOnly",
-    "typechain:ethers:v6": "typechain --target=ethers-v6 --out-dir src/contracts/types 'src/contracts/abi/*.json'",
-    "typechain": "yarn typechain:ethers:v6"
+    "typechain:ethers:v5": "typechain --target=ethers-v5 --out-dir src/contracts/ethersv5/types 'src/contracts/abi/*.json'",
+    "typechain:ethers:v6": "typechain --target=ethers-v6 --out-dir src/contracts/ethersv6/types 'src/contracts/abi/*.json'",
+    "typechain": "yarn typechain:ethers:v6 && yarn typechain:ethers:v5"
   },
   "devDependencies": {
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
+    "@typechain/ethers-v5": "^11.1.2",
     "@typechain/ethers-v6": "^0.5.1",
     "@types/react": "^18.3.3",
-    "ethersv5": "npm:ethers@5",
-    "ethersv6": "npm:ethers@6",
     "react": "^18.3.1",
     "rollup": "^4.18.0",
     "rollup-plugin-typescript2": "^0.36.0",
     "typechain": "^8.3.2",
     "typescript": "^5.5.3"
   },
-  "peerDependencies": {
-    "ethersv5": "npm:ethers@5",
-    "ethersv6": "npm:ethers@6"
-  },
   "dependencies": {
+    "@ethersproject/providers": "^5.7.2",
     "axios": "^1.7.2",
+    "ethersv5": "npm:ethers@5",
+    "ethersv6": "npm:ethers@6",
     "merkletreejs": "^0.4.0",
     "rxjs": "^7.8.1"
   },

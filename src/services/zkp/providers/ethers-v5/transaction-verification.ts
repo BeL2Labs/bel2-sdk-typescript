@@ -1,5 +1,5 @@
-import { ContractTransactionResponse, JsonRpcProvider, JsonRpcSigner } from "ethersv6";
-import { getEVMRPCProvider } from "src/services/evm/providers/ethers-v6/read-only-provider";
+import { JsonRpcProvider, JsonRpcSigner, Web3Provider } from "@ethersproject/providers";
+import { getEVMRPCProvider } from "src/services/evm/providers/ethers-v5/read-only-provider";
 import { prepareZKPProofParams } from "../../proof-params";
 import { TransactionVerification } from "../../transaction-verification";
 import { getBitcoinTransactionVerificationStatus, sendBitcoinTransactionVerificationRequest } from "./bitcoin-tx-verifier-contract";
@@ -20,7 +20,7 @@ export class EthersV6TransactionVerification extends TransactionVerification {
    * @param chainId EVM chain ID on which the verification result gets linked.
    * @param provider Read-only EVM wallet provider used to fetch the current verification status, if you want to use your own RPC api or provider. Otherwise, a default RPC API is used.
    */
-  public static async create(btcTxId: string, chainId: number | bigint, provider?: JsonRpcProvider): Promise<EthersV6TransactionVerification> {
+  public static async create(btcTxId: string, chainId: number | bigint, provider?: Web3Provider): Promise<EthersV6TransactionVerification> {
     const tv = new EthersV6TransactionVerification(btcTxId, provider || getEVMRPCProvider(BigInt(chainId)));
     await tv.checkStatus(); // blocking status retrieval, initial value.
     tv.repeatinglyCheckStatus(); // non blocking repeating status retrieval until verified.
@@ -44,13 +44,14 @@ export class EthersV6TransactionVerification extends TransactionVerification {
    * this bitcoin transaction.
    * 
    * @param scriptHex If you want ZKP to ensure that a script output matches transaction outputs, pass the script HEX used by the transaction. This is optional.
+   * @returns Transaction hash
    */
-  public async submitVerificationRequest(signer: JsonRpcSigner, scriptHex?: string): Promise<ContractTransactionResponse> {
+  public async submitVerificationRequest(signer: JsonRpcSigner, scriptHex?: string, waitForResult = false): Promise<string> {
     // fetch all data required to construct the tx, store in memory
     this.zkpProofParams = await prepareZKPProofParams(this.btcTxId);
     if (!this.zkpProofParams)
       return null;
 
-    return sendBitcoinTransactionVerificationRequest(signer, this.zkpProofParams, scriptHex);
+    return sendBitcoinTransactionVerificationRequest(signer, this.zkpProofParams, scriptHex, waitForResult);
   }
 }

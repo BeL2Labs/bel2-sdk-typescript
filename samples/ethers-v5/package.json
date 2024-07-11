@@ -1,5 +1,5 @@
 {
-  "name": "bel2-sdk-sample-ethers-v6",
+  "name": "bel2-sdk-sample-ethers-v5",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -15,7 +15,7 @@
     "@types/react-dom": "^18.0.0",
     "buffer": "^6.0.3",
     "crypto-browserify": "^3.12.0",
-    "ethers": "6",
+    "ethers": "5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-scripts": "5.0.1",

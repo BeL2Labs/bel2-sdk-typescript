@@ -1,5 +1,5 @@
 import { ContractRunner, ContractTransactionResponse, JsonRpcProvider, Signer } from "ethersv6";
-import { BtcTxVerifier, BtcTxVerifier__factory } from "src/contracts/types";
+import { BtcTxVerifier, BtcTxVerifier__factory } from "src/contracts/ethersv6/types";
 import { getChainConfigByChainId } from "src/services/chains/chains";
 import { errorToRevertedExecution } from "src/services/evm/providers/ethers-v6/errors";
 import { convertContractStatus } from "../../contract";

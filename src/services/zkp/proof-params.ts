@@ -17,7 +17,6 @@ export type ZKPProofParams = {
   merkleRoot: string;
   leaf: string;
   positions: boolean[];
-  script: string; // Bitcoin transaction script HEX
 }
 
 /**
@@ -34,38 +33,45 @@ export const prepareZKPProofParams = async (txId: string): Promise<ZKPProofParam
   console.log("Building fill order proof parameters for bitcoin transaction ID:", txId);
 
   const txSpecifics = await getTransactionSpecific(txId);
-  console.log("Got transaction specifics:", txSpecifics);
   if (!txSpecifics)
-    return null;
+    throw new Error("Failed to fetch transaction specifics");
+
+  console.log("Got transaction specifics:", txSpecifics);
+
+  if (!txSpecifics.blockhash)
+    throw new Error("Transaction is not packed in a block yet");
 
   const { blockInfo, txIds } = (await getBlock(txSpecifics.blockhash, true)) || {};
   console.log("Got block info:", blockInfo);
   if (!blockInfo)
-    return null;
+    throw new Error("Failed to fetch transaction block details");
 
   const blockHeight = blockInfo.height;
   const txRawData = "0x" + txSpecifics.hex;
-  const script = "TODO";
 
   const utxos: string[] = [];
   for (const vin of txSpecifics.vin) {
+    if (!vin.txid)
+      throw new Error("A transaction input does not contain a txid. Coinbase transactions are not supported");
+
     const txData = await getTransactionDetails(vin.txid);
-    if (!txData)
-      return null;
+    if (!txData || !txData.hex) {
+      console.error("Incorrect UTXO:", txData);
+      throw new Error("Failed to fetch UTXO details");
+    }
 
     utxos.push("0x" + txData.hex);
   }
 
   const merkleParams = await prepareMerkleProofParams(txIds, txId);
   if (!merkleParams)
-    return null;
+    throw new Error("Failed to compute merkle tree parameters");
 
   const { merkleRoot, leaf, proof, positions } = merkleParams;
 
   return {
     blockHeight,
     txRawData,
-    script,
     utxos,
     txId,
     txIds,
