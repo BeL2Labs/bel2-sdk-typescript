@@ -19,7 +19,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <Stack direction="column" gap={3} padding={20}>
         <Stack direction="row" sx={{ alignItems: "center", justifyItems: "center" }} gap={2}>
-          BeL2 SDK tests
+          BeL2 SDK sample for ethers v6
         </Stack>
 
         <Button onClick={connectWallet} variant="contained" disabled={!!account}>

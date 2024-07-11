@@ -5,12 +5,6 @@ var merkletreejs = require('merkletreejs');
 var axios = require('axios');
 var rxjs = require('rxjs');
 
-exports.EVMProviderType = void 0;
-(function (EVMProviderType) {
-    EVMProviderType[EVMProviderType["EthersV5"] = 0] = "EthersV5";
-    EVMProviderType[EVMProviderType["EthersV6"] = 1] = "EthersV6";
-})(exports.EVMProviderType || (exports.EVMProviderType = {}));
-
 /**
  * List of supported EVMs by BeL2.
  */
@@ -76,8 +70,10 @@ const getBlock = async (heightOrHash, withTxIds = false) => {
     try {
         let requestUrl = `${rootExplorerApi()}/api/v2/block/${heightOrHash}`;
         let blockInfo = await apiGet(requestUrl);
-        if (!blockInfo || "error" in blockInfo)
+        if (!blockInfo || "error" in blockInfo) {
+            "error" in blockInfo && console.error(blockInfo.error);
             return { blockInfo: undefined, txIds: undefined };
+        }
         // Caller wants all transactions. So we continue to iterate all pages and build the txIds list.
         let txIds = undefined;
         if (withTxIds) {
@@ -110,6 +106,20 @@ const getTransactionDetails = async (txId) => {
         return null;
     }
 };
+/**
+ * Gets all transaction details for a given transaction ID.
+ * This returns some results a bit different from getTransactionDetails, including script info.
+ */
+const getTransactionSpecific = async (txId) => {
+    try {
+        let requestUrl = `${rootExplorerApi()}/api/v2/tx-specific/${txId}`;
+        return await apiGet(requestUrl);
+    }
+    catch (err) {
+        console.error('NowNodes: failed to get transaction specific:', err);
+        return null;
+    }
+};
 
 /**
  * Retrieves and returns all info needed to be able to submit a ZKP proof contract, in order to
@@ -122,19 +132,20 @@ const getTransactionDetails = async (txId) => {
  * @returns utxos the list of all transaction raw data of utxos that are spent by the transaction.
  */
 const prepareZKPProofParams = async (txId) => {
-    console.log("Building fill order proof parameters for order ID:", txId);
-    const txDetails = await getTransactionDetails(txId);
-    console.log("Got transaction details:", txDetails);
-    if (!txDetails)
+    console.log("Building fill order proof parameters for bitcoin transaction ID:", txId);
+    const txSpecifics = await getTransactionSpecific(txId);
+    console.log("Got transaction specifics:", txSpecifics);
+    if (!txSpecifics)
         return null;
-    const { blockInfo, txIds } = (await getBlock(txDetails.blockHash, true)) || {};
+    const { blockInfo, txIds } = (await getBlock(txSpecifics.blockhash, true)) || {};
     console.log("Got block info:", blockInfo);
     if (!blockInfo)
         return null;
     const blockHeight = blockInfo.height;
-    const txRawData = "0x" + txDetails.hex;
+    const txRawData = "0x" + txSpecifics.hex;
+    const script = "TODO";
     const utxos = [];
-    for (const vin of txDetails.vin) {
+    for (const vin of txSpecifics.vin) {
         const txData = await getTransactionDetails(vin.txid);
         if (!txData)
             return null;
@@ -147,6 +158,7 @@ const prepareZKPProofParams = async (txId) => {
     return {
         blockHeight,
         txRawData,
+        script,
         utxos,
         txId,
         txIds,
@@ -179,22 +191,27 @@ const prepareMerkleProofParams = (btcTxIds, paymentBtcTxId) => {
     };
 };
 
-exports.TransactionVerificationStatus = void 0;
+var TransactionVerificationStatus;
 (function (TransactionVerificationStatus) {
     TransactionVerificationStatus[TransactionVerificationStatus["Unknown"] = 0] = "Unknown";
     TransactionVerificationStatus[TransactionVerificationStatus["NotSubmitted"] = 1] = "NotSubmitted";
     TransactionVerificationStatus[TransactionVerificationStatus["Pending"] = 2] = "Pending";
     TransactionVerificationStatus[TransactionVerificationStatus["Verified"] = 3] = "Verified";
     TransactionVerificationStatus[TransactionVerificationStatus["VerificationFailed"] = 4] = "VerificationFailed"; // Transaction could not be proven
-})(exports.TransactionVerificationStatus || (exports.TransactionVerificationStatus = {}));
+})(TransactionVerificationStatus || (TransactionVerificationStatus = {}));
 
+const CheckStatusIntervalMs = 3000; // Time in milliseconds between 2 ZKP status checks
 class TransactionVerification {
     constructor(btcTxId) {
         this.btcTxId = btcTxId;
-        this.status$ = new rxjs.BehaviorSubject(exports.TransactionVerificationStatus.Unknown);
+        this.status$ = new rxjs.BehaviorSubject(TransactionVerificationStatus.Unknown);
     }
-    checkStatus() {
-        return;
+    repeatinglyCheckStatus() {
+        setTimeout(() => {
+            this.checkStatus().then(() => {
+                this.repeatinglyCheckStatus();
+            });
+        }, CheckStatusIntervalMs);
     }
     getStatus() {
         return this.status$.getValue();
@@ -204,8 +221,8 @@ class TransactionVerification {
      */
     isSubmitted() {
         return ![
-            exports.TransactionVerificationStatus.Unknown,
-            exports.TransactionVerificationStatus.NotSubmitted
+            TransactionVerificationStatus.Unknown,
+            TransactionVerificationStatus.NotSubmitted
         ].includes(this.getStatus());
     }
     /**
@@ -213,21 +230,11 @@ class TransactionVerification {
      */
     isComplete() {
         return [
-            exports.TransactionVerificationStatus.Verified,
-            exports.TransactionVerificationStatus.VerificationFailed
+            TransactionVerificationStatus.Verified,
+            TransactionVerificationStatus.VerificationFailed
         ].includes(this.getStatus());
     }
 }
-
-const convertContractStatus = (contractStatus) => {
-    /* Contract: enum ProofStatus { toBeVerified, verified, verifyFailed } */
-    switch (contractStatus) {
-        case BigInt(0): return exports.TransactionVerificationStatus.Pending;
-        case BigInt(1): return exports.TransactionVerificationStatus.Verified;
-        case BigInt(2): return exports.TransactionVerificationStatus.VerificationFailed;
-        default: return exports.TransactionVerificationStatus.Unknown;
-    }
-};
 
 const _abi = [
     {
@@ -671,13 +678,50 @@ BtcTxVerifier__factory.abi = _abi;
 /**
  * Tries to understand any kind of contract call error as a potential "revert".
  * If that's a revertion, returns the revert reason.
+ *
+ * Error structure example:
+  {
+    "code": "CALL_EXCEPTION",
+    "action": "call",
+    "data": "0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000e5265636f72644e6f74466f756e64000000000000000000000000000000000000",
+    "reason": "RecordNotFound",
+    "transaction": {
+        "to": "0x5293a9471A4A004874cea7301aC8936F8830BdF2",
+        "data": "0x7805ae1386ae1606a3ab907a93f5095cc36f2bcde896c3a28f01c455b79d413c4d5667e2"
+    },
+    "invocation": {
+        "method": "getTxZkpStatus",
+        "signature": "getTxZkpStatus(bytes32)",
+        "args": [
+            "0x86ae1606a3ab907a93f5095cc36f2bcde896c3a28f01c455b79d413c4d5667e2"
+        ]
+    },
+    "revert": {
+        "signature": "Error(string)",
+        "name": "Error",
+        "args": [
+            "RecordNotFound"
+        ]
+    },
+    "shortMessage": "execution reverted: \"RecordNotFound\""
+  }
  */
 const errorToRevertedExecution = (error) => {
     if (!ethersv6.isCallException(error))
         return null;
     const callException = error;
-    const revertReason = callException.error?.message;
+    const revertReason = callException.reason;
     return revertReason;
+};
+
+const convertContractStatus = (contractStatus) => {
+    /* Contract: enum ProofStatus { toBeVerified, verified, verifyFailed } */
+    switch (contractStatus) {
+        case BigInt(0): return TransactionVerificationStatus.Pending;
+        case BigInt(1): return TransactionVerificationStatus.Verified;
+        case BigInt(2): return TransactionVerificationStatus.VerificationFailed;
+        default: return TransactionVerificationStatus.Unknown;
+    }
 };
 
 const connectZkpTxVerifierContract = async (runner) => {
@@ -690,26 +734,26 @@ const connectZkpTxVerifierContract = async (runner) => {
     const contractAddress = activeChain.contracts.btcTxVerifier;
     return BtcTxVerifier__factory.connect(contractAddress, runner);
 };
-const sendBitcoinTransactionVerificationRequest = async (signer, verificationParams) => {
+const sendBitcoinTransactionVerificationRequest = async (signer, verificationParams, script) => {
     const verifierContract = await connectZkpTxVerifierContract(signer);
     const { blockHeight, txRawData, utxos, txId, txIds, merkleRoot, leaf, proof, positions } = verificationParams;
-    const script = "TODO";
     // Generate the verifyBtcTx() transaction and sends it through the given ethers signer
-    const txResponse = await verifierContract.verifyBtcTx.send(txRawData, utxos, blockHeight, proof, merkleRoot, txId, positions, script);
+    const txResponse = await verifierContract.verifyBtcTx.send(txRawData, utxos, blockHeight, proof, merkleRoot, `0x${txId}`, positions, script || "0x" // "If the script is given, it will verify whether the output in this tx has a matching address"
+    );
     return txResponse;
 };
 const getBitcoinTransactionVerificationStatus = async (providerOrSigner, txId) => {
     const verifierContract = await connectZkpTxVerifierContract(providerOrSigner);
     try {
-        const rawStatus = await verifierContract.getTxZkpStatus(txId);
+        const rawStatus = await verifierContract.getTxZkpStatus(`0x${txId}`);
         return convertContractStatus(rawStatus);
     }
     catch (e) {
         const revertedReason = errorToRevertedExecution(e);
         if (revertedReason === "RecordNotFound")
-            return exports.TransactionVerificationStatus.NotSubmitted;
+            return TransactionVerificationStatus.NotSubmitted;
         else
-            return exports.TransactionVerificationStatus.Unknown;
+            return TransactionVerificationStatus.Unknown;
     }
 };
 
@@ -729,31 +773,50 @@ class EthersV6TransactionVerification extends TransactionVerification {
     static async create(btcTxId, chainId, providerOrSigner) {
         const provider = providerOrSigner || getDefaultEVMProvider(BigInt(chainId));
         const tv = new EthersV6TransactionVerification(btcTxId, provider);
-        await tv.checkStatus();
+        await tv.checkStatus(); // blocking status retrieval, initial value.
+        tv.repeatinglyCheckStatus(); // non blocking repeating status retrieval until verified.
         return tv;
     }
     async checkStatus() {
-        const _status = await getBitcoinTransactionVerificationStatus(this.roProvider, this.btcTxId);
-        this.status$.next(_status);
+        console.log("checking status");
+        try {
+            const _status = await getBitcoinTransactionVerificationStatus(this.roProvider, this.btcTxId);
+            this.status$.next(_status);
+        }
+        catch (e) {
+            console.error("Check status error:", e);
+        }
     }
     /**
      * Publishes an EVM transaction that requests generation of a ZKP proof for
      * this bitcoin transaction.
+     *
+     * @param scriptHex If you want ZKP to ensure that a script output matches transaction outputs, pass the script HEX used by the transaction. This is optional.
      */
-    async submitVerificationRequest(signer) {
+    async submitVerificationRequest(signer, scriptHex) {
         // fetch all data required to construct the tx, store in memory
         this.zkpProofParams = await prepareZKPProofParams(this.btcTxId);
         if (!this.zkpProofParams)
             return null;
-        return sendBitcoinTransactionVerificationRequest(signer, this.zkpProofParams);
+        return sendBitcoinTransactionVerificationRequest(signer, this.zkpProofParams, scriptHex);
     }
 }
 
+var index$1 = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  TransactionVerification: EthersV6TransactionVerification
+});
+
 const useTransactionVerificationStatus = (btcTxId) => {
-    return exports.TransactionVerificationStatus.NotSubmitted;
+    return TransactionVerificationStatus.NotSubmitted;
 };
 
-exports.EthersV6TransactionVerification = EthersV6TransactionVerification;
-exports.TransactionVerification = TransactionVerification;
-exports.useTransactionVerificationStatus = useTransactionVerificationStatus;
+var index = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  EthersV6: index$1,
+  get TransactionVerificationStatus () { return TransactionVerificationStatus; },
+  useTransactionVerificationStatus: useTransactionVerificationStatus
+});
+
+exports.ZKP = index;
 //# sourceMappingURL=index.cjs.js.map

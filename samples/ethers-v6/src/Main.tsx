@@ -1,15 +1,16 @@
 import { FC, useCallback, useMemo, useState } from 'react';
 import { ethers } from 'ethers';
 import { Button, Stack, TextField, Typography } from '@mui/material';
-import { TransactionVerificationStatus, EthersV6TransactionVerification } from "@bel2labs/sdk";
 import { useBehaviorSubject } from './utils/useBehaviorSubject';
+import { ZKP } from "@bel2labs/sdk";
 
 export const Main: FC = () => {
-  const [txHash, setTxHash] = useState(null);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string>(null);
+  const [checkingStatus, setCheckingStatus] = useState<boolean>(false);
+  const [requestingVerification, setRequestingVerification] = useState<boolean>(false);
 
-  const [verificationBTCTxId, setVerificationBTCTxId] = useState("86ae1606a3ab907a93f5095cc36f2bcde896c3a28f01c455b79d413c4d5667e2");
-  const [bitcoinTxVerification, setBitcoinTxVerification] = useState<EthersV6TransactionVerification>(undefined);
+  const [verificationBTCTxId, setVerificationBTCTxId] = useState("b23160a3935b5416ada75702feff47dec1ed18bf2a668ef9c8ad78887d704647");
+  const [bitcoinTxVerification, setBitcoinTxVerification] = useState<ZKP.EthersV6.TransactionVerification>(undefined);
   const verificationStatus = useBehaviorSubject(bitcoinTxVerification?.status$);
 
   const handleVerificationTxIdChanged = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -17,84 +18,102 @@ export const Main: FC = () => {
     setVerificationBTCTxId(event.target.value);
   }, []);
 
-  const sendTransaction = async () => {
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-
-      const tx = await signer.sendTransaction({
-        to: '0xRecipientAddressHere', // Replace with the recipient address
-        value: ethers.parseEther('0.01') // Replace with the amount to send
-      });
-
-      setTxHash(tx.hash);
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const statusMessage = useMemo(() => {
+  const verificationStatusMessage = useMemo(() => {
     switch (verificationStatus) {
-      case TransactionVerificationStatus.NotSubmitted:
+      case ZKP.TransactionVerificationStatus.NotSubmitted:
         return "Transaction verification has not been requested yet. Call prepareVerificationRequest() and publish the EVM transaction";
-      case TransactionVerificationStatus.Pending:
+      case ZKP.TransactionVerificationStatus.Pending:
         return "Transaction has been submitted to the ZKP service but not handled or not completed yet";
-      case TransactionVerificationStatus.VerificationFailed:
+      case ZKP.TransactionVerificationStatus.VerificationFailed:
         return "ZKP verification is completed but it failed. Check the submitted parameters";
-      case TransactionVerificationStatus.Verified:
+      case ZKP.TransactionVerificationStatus.Verified:
         return "ZKP verification is completed, the bitcoin transaction is genuine";
+      default:
+        return "Unknown ZKP verification status";
     }
   }, [verificationStatus]);
 
   const handleSetupVerificationInstance = useCallback(async () => {
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+      setError(null);
+      setCheckingStatus(true);
 
       if (!verificationBTCTxId)
         return;
 
       const evmChainId = 20; // Elastos ESC mainnet
-      const txVerification = await EthersV6TransactionVerification.create(verificationBTCTxId, evmChainId);
+      const txVerification = await ZKP.EthersV6.TransactionVerification.create(verificationBTCTxId, evmChainId);
       setBitcoinTxVerification(txVerification);
-
-      if (!txVerification.isSubmitted()) {
-        // Prepare/fetch all necessary information related to the bitcoin transaction, and submit the ZKP request
-        // to the ZKP evm contract.
-        const txResponse = await txVerification.submitVerificationRequest(signer);
-
-        // Wait for EVM transaction to be published
-        await txResponse.wait();
-      }
     }
     catch (e) {
       console.error(e);
+      setError(`${e}`);
     }
+
+    setCheckingStatus(false);
   }, [verificationBTCTxId]);
 
+  const handleRequestVerification = useCallback(async () => {
+    if (!bitcoinTxVerification.isSubmitted()) {
+      setError(null);
+      setRequestingVerification(true);
+
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+
+        // Prepare/fetch all necessary information related to the bitcoin transaction, and submit the ZKP request
+        // to the ZKP evm contract.
+        const txResponse = await bitcoinTxVerification.submitVerificationRequest(signer);
+        console.log("Preliminary response:", txResponse);
+
+        if (txResponse) {
+          // Wait for EVM transaction to be published
+          const receipt = await txResponse.wait();
+          console.log("Chain receipt:", receipt);
+        }
+        else {
+          setError("Empty transaction response, try again.");
+        }
+      }
+      catch (e) {
+        console.error(e);
+        setError(`${e}`);
+      }
+
+      setRequestingVerification(false);
+    }
+  }, [bitcoinTxVerification]);
+
   return (
-    <Stack direction="column" gap={3}>
+    <Stack direction="column" gap={2}>
       <Typography> Paste a bitcoin tx id to check its verification status and to request a verification</Typography>
 
       <TextField
-        label="xxx"
+        label="Bitcoin transaction ID to ZKP verify"
         value={verificationBTCTxId}
         onChange={handleVerificationTxIdChanged}
       />
 
       {
         !bitcoinTxVerification &&
-        <Button variant="contained" onClick={() => handleSetupVerificationInstance()}>Check verification status</Button>
+        <Button
+          variant="contained"
+          disabled={checkingStatus}
+          onClick={() => handleSetupVerificationInstance()}>Check verification status</Button>
       }
 
       {
-        verificationStatus === TransactionVerificationStatus.NotSubmitted &&
-        <Button variant="contained" onClick={() => handleSetupVerificationInstance()}>Verify</Button>
+        verificationStatus === ZKP.TransactionVerificationStatus.NotSubmitted &&
+        <Button
+          variant="contained"
+          disabled={requestingVerification}
+          onClick={() => handleRequestVerification()}>Request verification</Button>
       }
 
-      <Typography>{statusMessage}</Typography>
+      <Typography>{verificationStatusMessage}</Typography>
 
-      {txHash && <p>Transaction Hash: {txHash}</p>}
+      {checkingStatus && <p>Checking verification status, please hold on...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
     </Stack>
   );

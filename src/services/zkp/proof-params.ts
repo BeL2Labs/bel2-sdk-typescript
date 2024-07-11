@@ -1,6 +1,6 @@
 import { MerkleTree } from "merkletreejs";
 import { sha256 } from "../../utils/crypto/sha256";
-import { getBlock, getTransactionDetails } from "../nownodes-api/nownodes-api";
+import { getBlock, getTransactionDetails, getTransactionSpecific } from "../nownodes-api/nownodes-api";
 
 /**
  * Input parameters needed by the ZKP contract to submit a bitcoin transaction proof
@@ -17,6 +17,7 @@ export type ZKPProofParams = {
   merkleRoot: string;
   leaf: string;
   positions: boolean[];
+  script: string; // Bitcoin transaction script HEX
 }
 
 /**
@@ -30,23 +31,24 @@ export type ZKPProofParams = {
  * @returns utxos the list of all transaction raw data of utxos that are spent by the transaction.
  */
 export const prepareZKPProofParams = async (txId: string): Promise<ZKPProofParams> => {
-  console.log("Building fill order proof parameters for order ID:", txId);
+  console.log("Building fill order proof parameters for bitcoin transaction ID:", txId);
 
-  const txDetails = await getTransactionDetails(txId);
-  console.log("Got transaction details:", txDetails);
-  if (!txDetails)
+  const txSpecifics = await getTransactionSpecific(txId);
+  console.log("Got transaction specifics:", txSpecifics);
+  if (!txSpecifics)
     return null;
 
-  const { blockInfo, txIds } = (await getBlock(txDetails.blockHash, true)) || {};
+  const { blockInfo, txIds } = (await getBlock(txSpecifics.blockhash, true)) || {};
   console.log("Got block info:", blockInfo);
   if (!blockInfo)
     return null;
 
   const blockHeight = blockInfo.height;
-  const txRawData = "0x" + txDetails.hex;
+  const txRawData = "0x" + txSpecifics.hex;
+  const script = "TODO";
 
   const utxos: string[] = [];
-  for (const vin of txDetails.vin) {
+  for (const vin of txSpecifics.vin) {
     const txData = await getTransactionDetails(vin.txid);
     if (!txData)
       return null;
@@ -63,6 +65,7 @@ export const prepareZKPProofParams = async (txId: string): Promise<ZKPProofParam
   return {
     blockHeight,
     txRawData,
+    script,
     utxos,
     txId,
     txIds,

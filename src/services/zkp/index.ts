@@ -1,6 +1,8 @@
-export { EthersV6TransactionVerification } from "./providers/ethers-v6/transaction-verification";
-
+import * as EthersV6 from "./providers/ethers-v6";
+import { TransactionVerificationStatus } from "./verification-status";
 export * from "./hooks";
-export * from "./transaction-verification";
-export * from "./verification-status";
 
+export {
+  EthersV6,
+  TransactionVerificationStatus
+};

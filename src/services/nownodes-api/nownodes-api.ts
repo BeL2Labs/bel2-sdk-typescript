@@ -8,7 +8,11 @@
  */
 
 import axios from "axios";
-import { AddressInfo, BTCBlock, BTCTransaction, BestBlockHashInfo, UTXO } from "./model/types";
+import { AddressInfo } from "./model/address";
+import { BTCBlock, BestBlockHashInfo } from "./model/block";
+import { BTCTransaction } from "./model/tx-details";
+import { BTCTransactionSpecific } from "./model/tx-specific";
+import { UTXO } from "./model/utxo";
 
 // const mainnetNodeApi = 'https://nownodes-btc.bel2.org'; // Maps to 'https://btc.nownodes.io';
 const mainnetExplorerApi = 'https://nownodes-btcbook.bel2.org'; // Maps to 'https://btcbook.nownodes.io';
@@ -57,8 +61,10 @@ export const getBlock = async (heightOrHash: string, withTxIds = false): Promise
     let requestUrl = `${rootExplorerApi()}/api/v2/block/${heightOrHash}`;
     let blockInfo = await apiGet<BTCBlock>(requestUrl);
 
-    if (!blockInfo || "error" in blockInfo)
+    if (!blockInfo || "error" in blockInfo) {
+      "error" in blockInfo && console.error(blockInfo.error);
       return { blockInfo: undefined, txIds: undefined }
+    }
 
     // Caller wants all transactions. So we continue to iterate all pages and build the txIds list.
     let txIds: string[] = undefined;
@@ -92,6 +98,21 @@ export const getTransactionDetails = async (txId: string): Promise<BTCTransactio
   }
   catch (err) {
     console.error('NowNodes: failed to get transaction details:', err);
+    return null;
+  }
+}
+
+/**
+ * Gets all transaction details for a given transaction ID.
+ * This returns some results a bit different from getTransactionDetails, including script info.
+ */
+export const getTransactionSpecific = async (txId: string): Promise<BTCTransactionSpecific> => {
+  try {
+    let requestUrl = `${rootExplorerApi()}/api/v2/tx-specific/${txId}`;
+    return await apiGet<BTCTransactionSpecific>(requestUrl);
+  }
+  catch (err) {
+    console.error('NowNodes: failed to get transaction specific:', err);
     return null;
   }
 }

@@ -1,2 +1,6 @@
-export * from "./services/evm";
-export * from "./services/zkp";
+import * as ZKP from "./services/zkp";
+
+export {
+  ZKP
+};
+

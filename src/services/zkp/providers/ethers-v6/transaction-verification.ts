@@ -8,7 +8,7 @@ import { getBitcoinTransactionVerificationStatus, sendBitcoinTransactionVerifica
 export class EthersV6TransactionVerification extends TransactionVerification {
   private roProvider: EthersV6ReadOnlyProvider;
 
-  private constructor(btcTxId: string, providerOrSigner: EthersV6ReadOnlyProvider) {
+  protected constructor(btcTxId: string, providerOrSigner: EthersV6ReadOnlyProvider) {
     super(btcTxId);
     this.roProvider = providerOrSigner;
   }
@@ -25,26 +25,35 @@ export class EthersV6TransactionVerification extends TransactionVerification {
     const provider = providerOrSigner || getDefaultEVMProvider(BigInt(chainId));
 
     const tv = new EthersV6TransactionVerification(btcTxId, provider);
-    await tv.checkStatus();
+    await tv.checkStatus(); // blocking status retrieval, initial value.
+    tv.repeatinglyCheckStatus(); // non blocking repeating status retrieval until verified.
 
     return tv;
   }
 
   public async checkStatus(): Promise<void> {
-    const _status = await getBitcoinTransactionVerificationStatus(this.roProvider, this.btcTxId);
-    this.status$.next(_status);
+    console.log("checking status");
+    try {
+      const _status = await getBitcoinTransactionVerificationStatus(this.roProvider, this.btcTxId);
+      this.status$.next(_status);
+    }
+    catch (e) {
+      console.error("Check status error:", e);
+    }
   }
 
   /**
    * Publishes an EVM transaction that requests generation of a ZKP proof for 
    * this bitcoin transaction.
+   * 
+   * @param scriptHex If you want ZKP to ensure that a script output matches transaction outputs, pass the script HEX used by the transaction. This is optional.
    */
-  public async submitVerificationRequest(signer: EthersV6ReadWriteProvider): Promise<ContractTransactionResponse> {
+  public async submitVerificationRequest(signer: EthersV6ReadWriteProvider, scriptHex?: string): Promise<ContractTransactionResponse> {
     // fetch all data required to construct the tx, store in memory
     this.zkpProofParams = await prepareZKPProofParams(this.btcTxId);
     if (!this.zkpProofParams)
       return null;
 
-    return sendBitcoinTransactionVerificationRequest(signer, this.zkpProofParams);
+    return sendBitcoinTransactionVerificationRequest(signer, this.zkpProofParams, scriptHex);
   }
 }

@@ -1,10 +1,10 @@
 import { ContractRunner, ContractTransactionResponse, JsonRpcProvider, Signer } from "ethersv6";
-import { convertContractStatus } from "../../contract";
-import { ZKPProofParams } from "../../proof-params";
-import { TransactionVerificationStatus } from "../../verification-status";
 import { BtcTxVerifier, BtcTxVerifier__factory } from "src/contracts/types";
 import { getChainConfigByChainId } from "src/services/chains/chains";
 import { errorToRevertedExecution } from "src/services/evm/providers/ethers-v6/errors";
+import { convertContractStatus } from "../../contract";
+import { ZKPProofParams } from "../../proof-params";
+import { TransactionVerificationStatus } from "../../verification-status";
 
 const connectZkpTxVerifierContract = async (runner: ContractRunner): Promise<BtcTxVerifier> => {
   if (!runner)
@@ -19,7 +19,7 @@ const connectZkpTxVerifierContract = async (runner: ContractRunner): Promise<Btc
   return BtcTxVerifier__factory.connect(contractAddress, runner);
 }
 
-export const sendBitcoinTransactionVerificationRequest = async (signer: Signer, verificationParams: ZKPProofParams): Promise<ContractTransactionResponse> => {
+export const sendBitcoinTransactionVerificationRequest = async (signer: Signer, verificationParams: ZKPProofParams, script?: string): Promise<ContractTransactionResponse> => {
   const verifierContract = await connectZkpTxVerifierContract(signer);
 
   const {
@@ -34,8 +34,6 @@ export const sendBitcoinTransactionVerificationRequest = async (signer: Signer, 
     positions
   } = verificationParams;
 
-  const script = "TODO";
-
   // Generate the verifyBtcTx() transaction and sends it through the given ethers signer
   const txResponse = await verifierContract.verifyBtcTx.send(
     txRawData,
@@ -43,9 +41,9 @@ export const sendBitcoinTransactionVerificationRequest = async (signer: Signer, 
     blockHeight,
     proof,
     merkleRoot,
-    txId,
+    `0x${txId}`,
     positions,
-    script
+    script || "0x" // "If the script is given, it will verify whether the output in this tx has a matching address"
   );
 
   return txResponse;
@@ -55,7 +53,7 @@ export const getBitcoinTransactionVerificationStatus = async (providerOrSigner: 
   const verifierContract = await connectZkpTxVerifierContract(providerOrSigner);
 
   try {
-    const rawStatus = await verifierContract.getTxZkpStatus(txId);
+    const rawStatus = await verifierContract.getTxZkpStatus(`0x${txId}`);
     return convertContractStatus(rawStatus);
   }
   catch (e) {
