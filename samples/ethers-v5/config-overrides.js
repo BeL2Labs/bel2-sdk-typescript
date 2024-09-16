@@ -7,11 +7,12 @@ module.exports = override(
             crypto: 'crypto-browserify',
             stream: 'stream-browserify',
             vm: false,
+            process: require.resolve('process/browser.js'), // Add .js extension
         }
     }),
     addWebpackPlugin(
         new webpack.ProvidePlugin({
-            process: 'process/browser',
+            process: 'process/browser.js', // Add .js extension
             Buffer: ['buffer', 'Buffer']
         })
     )
