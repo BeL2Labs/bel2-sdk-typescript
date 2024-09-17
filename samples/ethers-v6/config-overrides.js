@@ -4,14 +4,15 @@ const webpack = require('webpack');
 module.exports = override(
     addWebpackResolve({
         fallback: {
-            crypto: 'crypto-browserify',
-            stream: 'stream-browserify',
+            crypto: require.resolve('crypto-browserify'),
+            stream: require.resolve('stream-browserify'),
             vm: false,
+            process: require.resolve('process/browser.js'),
         }
     }),
     addWebpackPlugin(
         new webpack.ProvidePlugin({
-            process: 'process/browser',
+            process: 'process/browser.js',
             Buffer: ['buffer', 'Buffer']
         })
     )

@@ -1,4 +1,4 @@
-import { ContractTransactionResponse, JsonRpcProvider, JsonRpcSigner } from "ethersv6";
+import { ContractTransactionResponse, JsonRpcProvider, JsonRpcSigner, Wallet } from "ethersv6";
 import { getEVMRPCProvider } from "src/services/evm/providers/ethers-v6/read-only-provider";
 import { prepareZKPProofParams } from "../../proof-params";
 import { TransactionVerification } from "../../transaction-verification";
@@ -45,7 +45,7 @@ export class EthersV6TransactionVerification extends TransactionVerification {
    * 
    * @param scriptHex If you want ZKP to ensure that a script output matches transaction outputs, pass the script HEX used by the transaction. This is optional.
    */
-  public async submitVerificationRequest(signer: JsonRpcSigner, scriptHex?: string): Promise<ContractTransactionResponse> {
+  public async submitVerificationRequest(signer: JsonRpcSigner|Wallet, scriptHex?: string): Promise<ContractTransactionResponse> {
     // fetch all data required to construct the tx, store in memory
     this.zkpProofParams = await prepareZKPProofParams(this.btcTxId);
     if (!this.zkpProofParams)
